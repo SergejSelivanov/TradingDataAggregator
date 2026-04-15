@@ -1,0 +1,53 @@
+# Build output
+bin/
+obj/
+artifacts/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+
+# Rider / JetBrains
+.idea/
+*.sln.DotSettings.user
+
+# Visual Studio / .NET user files
+.vs/
+*.user
+*.userosscache
+*.suo
+*.rsuser
+*.pidb
+*.svclog
+*.pdb
+
+# Local configuration and secrets
+appsettings.*.local.json
+appsettings.Local.json
+*.Development.local.json
+.env
+.env.*
+!.env.example
+
+# Local databases and generated data
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Logs and temporary files
+logs/
+*.log
+*.tmp
+*.temp
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
