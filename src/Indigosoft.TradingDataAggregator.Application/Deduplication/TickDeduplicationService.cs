@@ -13,28 +13,56 @@ public sealed class TickDeduplicationService : ITickDeduplicationService
 {
     private readonly ConcurrentDictionary<TickIdentity, DateTime> _seenTicks = new();
     private readonly TimeSpan _retentionPeriod;
+    private readonly TimeProvider _timeProvider;
     private long _acceptedTicks;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TickDeduplicationService"/> class.
     /// </summary>
-    public TickDeduplicationService(IOptions<IngestionOptions> options) =>
+    public TickDeduplicationService(IOptions<IngestionOptions> options)
+        : this(options, TimeProvider.System)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TickDeduplicationService"/> class.
+    /// </summary>
+    public TickDeduplicationService(IOptions<IngestionOptions> options, TimeProvider timeProvider)
+    {
         _retentionPeriod = options.Value.DeduplicationRetentionPeriod;
+        _timeProvider = timeProvider;
+    }
 
     /// <inheritdoc />
     public bool TryAccept(MarketTick tick)
     {
-        CleanupIfNeeded();
-        return _seenTicks.TryAdd(tick.GetIdentity(), DateTime.UtcNow);
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        CleanupIfNeeded(now);
+
+        var identity = tick.GetIdentity();
+        while (true)
+        {
+            if (_seenTicks.TryAdd(identity, now))
+                return true;
+
+            if (!_seenTicks.TryGetValue(identity, out var firstSeenAtUtc))
+                continue;
+
+            if (now - firstSeenAtUtc <= _retentionPeriod)
+                return false;
+
+            if (_seenTicks.TryUpdate(identity, now, firstSeenAtUtc))
+                return true;
+        }
     }
 
-    private void CleanupIfNeeded()
+    private void CleanupIfNeeded(DateTime now)
     {
         var acceptedTicks = Interlocked.Increment(ref _acceptedTicks);
         if (acceptedTicks % 1_000 != 0)
             return;
 
-        var threshold = DateTime.UtcNow - _retentionPeriod;
+        var threshold = now - _retentionPeriod;
         foreach (var item in _seenTicks)
             if (item.Value < threshold)
                 _seenTicks.TryRemove(item.Key, out _);
