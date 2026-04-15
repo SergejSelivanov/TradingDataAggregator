@@ -18,11 +18,8 @@ public sealed class ReconnectOptions
     /// <summary>
     /// Gets the reconnect delay for the specified retry attempt.
     /// </summary>
-    public TimeSpan GetDelay(int attempt)
-    {
-        var multiplier = Math.Pow(2, Math.Max(0, attempt - 1));
-        var delayMilliseconds = InitialDelay.TotalMilliseconds * multiplier;
-
-        return TimeSpan.FromMilliseconds(Math.Min(delayMilliseconds, MaxDelay.TotalMilliseconds));
-    }
+    public TimeSpan GetDelay(int attempt) =>
+        TimeSpan.FromMilliseconds(Math.Min(
+            InitialDelay.TotalMilliseconds * Math.Pow(2, Math.Max(0, attempt - 1)),
+            MaxDelay.TotalMilliseconds));
 }

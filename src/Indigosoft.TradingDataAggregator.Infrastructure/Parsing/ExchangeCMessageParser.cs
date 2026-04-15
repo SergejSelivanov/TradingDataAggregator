@@ -9,13 +9,11 @@ namespace Indigosoft.TradingDataAggregator.Infrastructure.Parsing;
 public sealed class ExchangeCMessageParser : IExchangeMessageParser<ExchangeCMessage>
 {
     /// <inheritdoc />
-    public MarketTick Parse(ExchangeCMessage message)
-    {
-        return MarketTick.Create(
+    public MarketTick Parse(ExchangeCMessage message) =>
+        MarketTick.Create(
             $"{message.BaseAsset}-{message.QuoteAsset}",
             message.Bid,
             message.Amount,
             message.CreatedAt.UtcDateTime,
             "MockExchangeC");
-    }
 }
